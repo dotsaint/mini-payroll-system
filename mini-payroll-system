@@ -1,0 +1,406 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.io.PrintWriter;
+
+// ======================================================================
+// OOP PRINCIPLE #1 — ABSTRACTION
+// The Employee class hides salary calculation details and exposes only 
+// essential information (name, age, position, calculateSalary).
+// ======================================================================
+abstract class Employee {
+
+    // ==================================================================
+    // OOP PRINCIPLE #2 — ENCAPSULATION
+    // Private fields keep data protected. Access is controlled through
+    // getters and setters.
+    // ==================================================================
+    private String name;
+    private int age;
+    private String position;
+
+    public Employee(String name, int age, String position) {
+        this.name = name;
+        this.age = age;
+        this.position = position;
+    }
+
+    // Encapsulated Getters and Setters
+    public String getName() { return name; }
+    public int getAge() { return age; }
+    public String getPosition() { return position; }
+
+    public void setName(String name) { this.name = name; }
+    public void setAge(int age) { this.age = age; }
+    public void setPosition(String position) { this.position = position; }
+
+    // ==================================================================
+    // ABSTRACTION + POLYMORPHISM
+    // Abstract method → implemented differently in child classes.
+    // ==================================================================
+    abstract double calculateSalary();
+}
+
+// ======================================================================
+// OOP PRINCIPLE #3 — INHERITANCE
+// FullTimeEmployee inherits all properties of Employee.
+// ======================================================================
+class FullTimeEmployee extends Employee {
+
+    // Encapsulation: private fields
+    private double dailyRate;
+    private int workingDays;
+    private double overtimeHours;
+    private double overtimeRate;
+    private double balance;
+
+    public FullTimeEmployee(String name, int age, String position,
+                            double dailyRate, int workingDays,
+                            double overtimeHours, double overtimeRate, double balance) {
+        super(name, age, position);   // Inheritance: calling parent constructor
+        this.dailyRate = dailyRate;
+        this.workingDays = workingDays;
+        this.overtimeHours = overtimeHours;
+        this.overtimeRate = overtimeRate;
+        this.balance = balance;
+    }
+
+    public double getBaseSalary() { return dailyRate * workingDays; }
+    public double getOvertimePay() { return overtimeHours * overtimeRate; }
+    public double getBalance() { return balance; }
+
+    // ==================================================================
+    // POLYMORPHISM — Method overriding
+    // Full-time salary formula is different from part-time.
+    // ==================================================================
+    @Override
+    double calculateSalary() {
+        return getBaseSalary() + getOvertimePay() - getBalance();
+    }
+}
+
+// ======================================================================
+// INHERITANCE — PartTimeEmployee also inherits Employee
+// ======================================================================
+class PartTimeEmployee extends Employee {
+
+    // Encapsulation: private fields
+    private double hourlyRate;
+    private int hoursWorked;
+    private int workingDays;
+    private double overtimeHours;
+    private double overtimeRate;
+    private double balance;
+
+    public PartTimeEmployee(String name, int age, String position,
+                            double hourlyRate, int hoursWorked, int workingDays,
+                            double overtimeHours, double overtimeRate, double balance) {
+        super(name, age, position);   // Inheritance
+        this.hourlyRate = hourlyRate;
+        this.hoursWorked = hoursWorked;
+        this.workingDays = workingDays;
+        this.overtimeHours = overtimeHours;
+        this.overtimeRate = overtimeRate;
+        this.balance = balance;
+    }
+
+    public double getBaseSalary() { return hourlyRate * hoursWorked * workingDays; }
+    public double getOvertimePay() { return overtimeHours * overtimeRate; }
+    public double getBalance() { return balance; }
+
+    // POLYMORPHISM — overrides abstract method differently
+    @Override
+    double calculateSalary() {
+        return getBaseSalary() + getOvertimePay() - getBalance();
+    }
+}
+
+public class Main {
+    static Scanner sc = new Scanner(System.in);
+
+    // ======================================================================
+    // POLYMORPHISM — This list can store ANY object that IS-A Employee
+    // (FullTimeEmployee or PartTimeEmployee)
+    // ======================================================================
+    static ArrayList<Employee> employees = new ArrayList<>();
+
+    // Clear console screen
+    public static void clearTerminal() {
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (Exception e) {
+            System.out.println("Unable to clear screen.");
+        }
+    }
+
+    // UI Borders
+    public static void printMenuBorder() {
+        System.out.println("╔══════════════════════════════════════════════════════════════╗");
+    }
+    public static void printMenuBottom() {
+        System.out.println("╚══════════════════════════════════════════════════════════════╝");
+    }
+    public static void printCenteredTitle(String title) {
+        int totalWidth = 62;
+        int padding = (totalWidth - title.length()) / 2;
+        String leftPad = " ".repeat(padding);
+        String rightPad = " ".repeat(totalWidth - padding - title.length());
+        System.out.println("║" + leftPad + title + rightPad + "║");
+    }
+
+    // Save to File Feature
+    public static void saveToFile() {
+        try {
+            PrintWriter writer = new PrintWriter("employees.txt");
+
+            writer.println("========== EMPLOYEE RECORDS ==========\n");
+
+            for (Employee e : employees) {
+
+                // ==============================================================
+                // POLYMORPHISM — The loop does not care if the employee is
+                // full-time or part-time. calculateSalary() works differently
+                // depending on object type.
+                // ==============================================================
+                writer.println("Name: " + e.getName());
+                writer.println("Age: " + e.getAge());
+                writer.println("Position: " + e.getPosition());
+
+                if (e instanceof FullTimeEmployee fte) {
+                    writer.printf("Base Salary: %.2f%n", fte.getBaseSalary());
+                    writer.printf("Overtime Pay: %.2f%n", fte.getOvertimePay());
+                    writer.printf("Balance: %.2f%n", fte.getBalance());
+                } else if (e instanceof PartTimeEmployee pte) {
+                    writer.printf("Base Salary: %.2f%n", pte.getBaseSalary());
+                    writer.printf("Overtime Pay: %.2f%n", pte.getOvertimePay());
+                    writer.printf("Balance: %.2f%n", pte.getBalance());
+                }
+
+                writer.printf("Total Salary: %.2f%n", e.calculateSalary());
+                writer.println("--------------------------------------\n");
+            }
+
+            writer.close();
+            System.out.println("All employee records saved to employees.txt!");
+
+        } catch (Exception ex) {
+            System.out.println("Error saving file: " + ex.getMessage());
+        }
+    }
+
+    // ======================================================================
+    // MAIN PROGRAM LOOP
+    // ======================================================================
+    public static void main(String[] args) {
+
+        while (true) {
+            clearTerminal();
+
+            printMenuBorder();
+            printCenteredTitle("MINI PAYROLL SYSTEM");
+            printMenuBottom();
+
+            System.out.println("╔════════════════════════════════════════════════════╗");
+            System.out.println("║ 1. Add Employee and Compute Payroll                ║");
+            System.out.println("║ 2. Search Employee                                 ║");
+            System.out.println("║ 3. Update Employee                                 ║");
+            System.out.println("║ 4. Delete Employee                                 ║");
+            System.out.println("║ 5. List All Employees                              ║");
+            System.out.println("║ 6. Exit                                            ║");
+            System.out.println("╚════════════════════════════════════════════════════╝");
+
+            System.out.print("Enter choice: ");
+            int menu = sc.nextInt();
+            sc.nextLine();
+
+            switch (menu) {
+                case 1: addEmployee(); break;
+                case 2: searchEmployee(); break;
+                case 3: updateEmployee(); break;
+                case 4: deleteEmployee(); break;
+                case 5: listEmployees(); break;
+                case 6:
+                    saveToFile();
+                    System.out.println("\nExiting program... Goodbye!");
+                    return;
+                default:
+                    System.out.println("Invalid option.");
+                    break;
+            }
+
+            System.out.println("\nPress ENTER to continue...");
+            sc.nextLine();
+        }
+    }
+
+    // ======================================================================
+    // ADD EMPLOYEE (Uses Polymorphism to create different employee types)
+    // ======================================================================
+    public static void addEmployee() {
+        System.out.println("\n===== NAME OF EMPLOYEE =====");
+
+        System.out.print("Enter Name: ");
+        String name = sc.nextLine();
+
+        System.out.print("Enter Age: ");
+        int age = sc.nextInt();
+        sc.nextLine();
+
+        System.out.print("Enter Position: ");
+        String position = sc.nextLine();
+
+        System.out.println("1. Full-Time");
+        System.out.println("2. Part-Time");
+        System.out.print("Choose Type: ");
+        int type = sc.nextInt();
+
+        Employee emp = null;  // Polymorphic reference
+
+        if (type == 1) {
+            System.out.print("Daily Rate: ");
+            double rate = sc.nextDouble();
+            System.out.print("Working Days: ");
+            int days = sc.nextInt();
+            System.out.print("Overtime Hours: ");
+            double otHours = sc.nextDouble();
+            System.out.print("Overtime Rate per hour: ");
+            double otRate = sc.nextDouble();
+            System.out.print("Balance/Deduction: ");
+            double balance = sc.nextDouble();
+            sc.nextLine();
+
+            emp = new FullTimeEmployee(name, age, position, rate, days, otHours, otRate, balance);
+
+            System.out.println("\n===== PAYROLL SUMMARY =====");
+            System.out.println("Name: " + emp.getName());
+            System.out.println("Age: " + emp.getAge());
+            System.out.println("Position: " + emp.getPosition());
+            System.out.printf("Base Salary: PHP %.2f%n", ((FullTimeEmployee)emp).getBaseSalary());
+            System.out.printf("Overtime Pay: PHP %.2f%n", ((FullTimeEmployee)emp).getOvertimePay());
+            System.out.printf("Balance/Deduction: PHP %.2f%n", ((FullTimeEmployee)emp).getBalance());
+            System.out.printf("Total Salary: PHP %.2f%n", emp.calculateSalary());
+
+        } else if (type == 2) {
+            System.out.print("Hourly Rate: ");
+            double hrate = sc.nextDouble();
+            System.out.print("Hours per Day: ");
+            int hours = sc.nextInt();
+            System.out.print("Working Days: ");
+            int days = sc.nextInt();
+            System.out.print("Overtime Rate per hour: ");
+            double otRate = sc.nextDouble();
+            System.out.print("Overtime Hours: ");
+            double otHours = sc.nextDouble();
+            System.out.print("Balance/Deduction: ");
+            double balance = sc.nextDouble();
+            sc.nextLine();
+
+            emp = new PartTimeEmployee(name, age, position, hrate, hours, days, otHours, otRate, balance);
+
+            System.out.println("\n===== PAYROLL SUMMARY =====");
+            System.out.println("Name: " + emp.getName());
+            System.out.println("Age: " + emp.getAge());
+            System.out.println("Position: " + emp.getPosition());
+            System.out.printf("Base Salary: PHP %.2f%n", ((PartTimeEmployee)emp).getBaseSalary());
+            System.out.printf("Overtime Pay: PHP %.2f%n", ((PartTimeEmployee)emp).getOvertimePay());
+            System.out.printf("Balance/Deduction: PHP %.2f%n", ((PartTimeEmployee)emp).getBalance());
+            System.out.printf("Total Salary: PHP %.2f%n", emp.calculateSalary());
+        } 
+        else {
+            System.out.println("Invalid type.");
+            return;
+        }
+
+        employees.add(emp);
+    }
+
+    // SEARCH EMPLOYEE
+    public static void searchEmployee() {
+        System.out.print("\nEnter name to search: ");
+        String key = sc.nextLine();
+
+        for (Employee e : employees) {
+            if (e.getName().equalsIgnoreCase(key)) {
+                System.out.println("\nFOUND:");
+                System.out.println("Name: " + e.getName());
+                System.out.println("Age: " + e.getAge());
+                System.out.println("Position: " + e.getPosition());
+
+                if (e instanceof FullTimeEmployee fte) {
+                    System.out.printf("Base Salary: PHP %.2f%n", fte.getBaseSalary());
+                    System.out.printf("Overtime Pay: PHP %.2f%n", fte.getOvertimePay());
+                    System.out.printf("Balance/Deduction: PHP %.2f%n", fte.getBalance());
+                } else if (e instanceof PartTimeEmployee pte) {
+                    System.out.printf("Base Salary: PHP %.2f%n", pte.getBaseSalary());
+                    System.out.printf("Overtime Pay: PHP %.2f%n", pte.getOvertimePay());
+                    System.out.printf("Balance/Deduction: PHP %.2f%n", pte.getBalance());
+                }
+
+                System.out.printf("Total Salary: PHP %.2f%n", e.calculateSalary());
+                return;
+            }
+        }
+        System.out.println("Employee not found.");
+    }
+
+    // UPDATE EMPLOYEE
+    public static void updateEmployee() {
+        System.out.print("\nEnter name to update: ");
+        String key = sc.nextLine();
+
+        for (Employee e : employees) {
+            if (e.getName().equalsIgnoreCase(key)) {
+                System.out.println("Employee found! Enter new details:");
+
+                System.out.print("New Name: ");
+                e.setName(sc.nextLine());
+
+                System.out.print("New Age: ");
+                e.setAge(sc.nextInt());
+                sc.nextLine();
+
+                System.out.print("New Position: ");
+                e.setPosition(sc.nextLine());
+
+                System.out.println("Employee updated successfully!");
+                return;
+            }
+        }
+        System.out.println("Employee not found.");
+    }
+
+    // DELETE EMPLOYEE
+    public static void deleteEmployee() {
+        System.out.print("\nEnter name to delete: ");
+        String key = sc.nextLine();
+
+        for (Employee e : employees) {
+            if (e.getName().equalsIgnoreCase(key)) {
+                employees.remove(e);
+                System.out.println("Employee removed successfully!");
+                return;
+            }
+        }
+        System.out.println("Employee not found.");
+    }
+
+    // LIST EMPLOYEES
+    public static void listEmployees() {
+        if (employees.isEmpty()) {
+            System.out.println("No employees stored.");
+            return;
+        }
+
+        System.out.println("\n===== EMPLOYEE LIST =====");
+        for (Employee e : employees) {
+            System.out.println("Name: " + e.getName()
+                    + " | Age: " + e.getAge()
+                    + " | Position: " + e.getPosition()
+                    + " | Total Salary: PHP " + e.calculateSalary());
+        }
+    }
+}
